@@ -1,0 +1,8 @@
+streamlit
+pandas
+mysql-connector-python
+plotly
+requests
+bcrypt
+geocoder
+datetime
