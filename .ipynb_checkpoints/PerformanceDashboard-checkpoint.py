@@ -5,6 +5,17 @@ import plotly.express as px
 import requests
 import bcrypt
 
+# Hide Streamlit's default menu and GitHub link
+st.markdown(
+    """
+    <style>
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 # Function to connect to MySQL
 def get_db_connection():
     return mysql.connector.connect(
