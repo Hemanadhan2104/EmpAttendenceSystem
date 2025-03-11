@@ -4,6 +4,12 @@ import pymysql
 import plotly.express as px
 import requests
 import bcrypt
+from datetime import datetime
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+
+ # sender_password = "huxi hyvf puig hlcq"   # Use an App Password for security
 
 # Hide Streamlit's default menu and GitHub link
 st.markdown(
@@ -125,6 +131,52 @@ def fetch_attendance_data():
     conn.close()
     return df
 
+
+
+# Function to send an email notification
+def send_email(to_email, employee_name, status, date, time, location, ip_address):
+    sender_email = "hemanadhan2104@gmail.com"   # Replace with your email
+    sender_password = "huxi hyvf puig hlcq"   # Use an App Password for security
+
+    subject = "📢 Attendance Marked Successfully!"
+    body = f"""
+    Hello {employee_name},
+
+    Your attendance has been recorded successfully.
+
+    📅 Date: {date}
+    ⏰ Time: {time}
+    📍 Location: {location}
+    🌍 IP Address: {ip_address}
+    🏷️ Status: {status}
+
+    Regards,  
+    Attendance Management System  
+    """
+
+    # Email Setup
+    msg = MIMEMultipart()
+    msg["From"] = sender_email
+    msg["To"] = to_email
+    msg["Subject"] = subject
+    msg.attach(MIMEText(body, "plain"))
+
+    # Sending Email
+    try:
+        server = smtplib.SMTP("smtp.gmail.com", 587)
+        server.starttls()
+        server.login(sender_email, sender_password)
+        server.sendmail(sender_email, to_email, msg.as_string())
+        server.quit()
+        print("✅ Email Sent Successfully!")
+    except Exception as e:
+        print(f"❌ Error Sending Email: {e}")
+
+
+
+
+
+
 # Streamlit App
 st.title("📊 Employee Attendance System")
 
@@ -149,6 +201,10 @@ if menu == "Register":
                 st.sidebar.success("✅ Registration Successful! You can now log in.")
             except mysql.connector.errors.IntegrityError:
                 st.sidebar.error("❌ Email already registered!")
+
+
+
+
 
 # Login System
 if menu == "Login":
@@ -178,10 +234,30 @@ if menu == "Dashboard" and "logged_in" in st.session_state and st.session_state.
     # Attendance Marking Form
     st.write("### 📝 Mark Attendance")
     status = st.radio("Select Status", ["Present", "Absent", "Late"])
+    # if st.button("Submit Attendance"):
+    #     mark_attendance(st.session_state.user['id'], status)
+    #     st.success("✅ Attendance Recorded!")
+    #     location, ip_address = get_location()
+    #     st.rerun()  # Assume this function fetches location & IP
+    # Modify Attendance Submission
     if st.button("Submit Attendance"):
-        mark_attendance(st.session_state.user['id'], status)
-        st.success("✅ Attendance Recorded!")
-        st.rerun()
+        user_id = st.session_state.user['id']
+        user_email = st.session_state.user['email']
+        user_name = st.session_state.user['name']
+        
+        mark_attendance(user_id, status)  # Save to Database
+        
+        # Fetch User Location & IP
+        location, ip_address = get_location()  # Assume this function fetches location & IP
+        
+        # Send Email Notification
+        send_email(user_email, user_name, status,  str(datetime.today().date()),  # Correct way to get today's date
+        str(datetime.now().time()),    # Correct way to get current time, 
+                   location, ip_address)
+        
+        st.success("✅ Attendance Recorded & Email Sent!")
+    
+
 
     # Fetch Logged-in User's Attendance Data
     # def fetch_user_attendance(user_id):
@@ -210,8 +286,8 @@ if menu == "Dashboard" and "logged_in" in st.session_state and st.session_state.
     # Fetch and display attendance records
     df = fetch_user_attendance(st.session_state.get("user", {}).get("id"))
     
-    st.write("✅ Data Loaded:", df.shape)  # Debug DataFrame shape
-    st.dataframe(df)  # Display in Streamlit
+    # st.write("✅ Data Loaded:", df.shape)  # Debug DataFrame shape
+    # st.dataframe(df)  # Display in Streamlit
     
 
     
