@@ -6,3 +6,4 @@ requests
 bcrypt
 geocoder
 datetime
+pymysql
